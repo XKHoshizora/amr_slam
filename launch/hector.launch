@@ -10,7 +10,7 @@
     </node>
 
     <!-- RViz 显示 -->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find amr_slam)/rviz/slam.rviz"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find amr_slam)/config/rviz/slam.rviz"/>
 
     <!-- 运动控制 -->
     <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering"/>
