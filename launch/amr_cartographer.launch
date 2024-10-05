@@ -1,27 +1,17 @@
 <launch>
-    <!-- 启动 Cartographer -->
-    <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node" output="screen">
-        <param name="configuration_directory" value="$(find amr_slam)/config"/>
-        <param name="configuration_basename" value="my_robot.lua"/>
-        <remap from="scan" to="/rplidar_scan"/>
-        <!-- 激光雷达话题 -->
-        <remap from="imu" to="/imu/data"/>
-        <!-- IMU 数据话题 -->
-        <remap from="odom" to="/odom"/>
-        <!-- 里程计数据话题 -->
+    <!-- 使用实际的时间 -->
+    <param name="/use_sim_time" value="false" />
+
+    <!-- Cartographer Node -->
+    <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node" output="screen" args="-configuration_directory /home/jetson/amr_ws/amr_launcher/config
+              -configuration_basename amr_slam_cartographer.lua">
+        <!-- Remap topics to match your laser scan topic -->
+        <remap from="scan" to="rplidar_scan" />
     </node>
 
-    <!-- 启动 Occupancy Grid 地图服务 -->
-    <node name="occupancy_grid_node" pkg="cartographer_ros" type="occupancy_grid_node" output="screen">
-        <param name="resolution" value="0.05"/>
-    </node>
+    <!-- Occupancy Grid Node -->
+    <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros" type="cartographer_occupancy_grid_node" args="-resolution 0.05" />
 
-    <!-- 启动 RPLiDAR S2 驱动 -->
-    <include file="$(find rplidar_ros)/launch/rplidar_s2.launch"/>
-
-    <!-- 启动 IMU 驱动 -->
-    <node name="imu_driver" pkg="imu_pkg" type="imu_node" output="screen"/>
-
-    <!-- 启动里程计节点 -->
-    <node name="odometry_node" pkg="amr_odometry" type="odometry_node" output="screen"/>
+    <!-- RViz for visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" required="true" args="-d $(find cartographer_ros)/configuration_files/demo_2d.rviz" />
 </launch>
