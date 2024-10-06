@@ -1,0 +1,57 @@
+<launch>
+
+    <!-- GMapping 参数 -->
+    <!-- 激光雷达参数 -->
+    <arg name="scan_topic" default="/scan"/>   <!-- 激光雷达话题名，默认值为 /scan -->
+    <arg name="maxRange" default="0.0"/>  <!-- 激光的最大探测范围，默认值为 0.0 表示无限制 -->
+    <arg name="maxUrange" default="0.0"/> <!-- 激光的最大可用范围，默认值为 0.0 表示使用最大激光探测范围 -->
+    <arg name="sigma" default="0.05"/>     <!-- 激光测距噪声标准差，默认值为 0.05 -->
+    <arg name="lskip" default="0"/>        <!-- 跳过的激光点数量，默认值为 0，不跳过任何点 -->
+
+    <!-- 坐标系参数 -->
+    <arg name="map_frame" default="map"/>        <!-- 地图坐标系，默认值为 map -->
+    <arg name="odom_frame" default="odom"/>      <!-- 里程计坐标系，默认值为 odom -->
+    <arg name="base_frame" default="base_link"/> <!-- 机器人底盘的坐标系，默认值为 base_link -->
+
+    <!-- 地图更新和分辨率参数 -->
+    <arg name="map_update_interval" default="5.0"/>   <!-- 地图更新间隔时间，默认值为 5.0 秒 -->
+    <arg name="throttle_scans" default="1"/>          <!-- 扫描处理频率，默认值为 1，表示每次扫描都处理 -->
+    <arg name="xmin" default="-100.0"/>               <!-- 地图最小范围 X 轴，默认值为 -100.0 米 -->
+    <arg name="ymin" default="-100.0"/>               <!-- 地图最小范围 Y 轴，默认值为 -100.0 米 -->
+    <arg name="xmax" default="100.0"/>                <!-- 地图最大范围 X 轴，默认值为 100.0 米 -->
+    <arg name="ymax" default="100.0"/>                <!-- 地图最大范围 Y 轴，默认值为 100.0 米 -->
+    <arg name="delta" default="0.05"/>                <!-- 地图分辨率，默认值为 0.05 米，即 5 cm 栅格大小 -->
+
+    <!-- 粒子滤波器参数 -->
+    <arg name="particles" default="30"/>               <!-- 粒子数量，默认值为 30 -->
+    <arg name="resampleThreshold" default="0.5"/>      <!-- 重新采样阈值，默认值为 0.5 -->
+
+    <!-- 扫描匹配参数 -->
+    <arg name="lstep" default="0.05"/>    <!-- 线性步长，默认值为 0.05 米 -->
+    <arg name="astep" default="0.05"/>    <!-- 角度步长，默认值为 0.05 弧度 -->
+    <arg name="iterations" default="5"/>  <!-- 最大迭代次数，默认值为 5 次 -->
+    <arg name="kernelSize" default="1"/>  <!-- 内核大小，默认值为 1 -->
+
+    <!-- 机器人运动噪声参数 -->
+    <arg name="srr" default="0.1"/>    <!-- 平移运动对平移的影响噪声，默认值为 0.1 -->
+    <arg name="srt" default="0.2"/>    <!-- 平移运动对旋转的影响噪声，默认值为 0.2 -->
+    <arg name="str" default="0.1"/>    <!-- 旋转运动对平移的影响噪声，默认值为 0.1 -->
+    <arg name="stt" default="0.2"/>    <!-- 旋转运动对旋转的影响噪声，默认值为 0.2 -->
+
+    <!-- 平移和旋转更新噪声参数 -->
+    <arg name="lsigma" default="0.075"/> <!-- 平移噪声，默认值为 0.075 -->
+    <arg name="ogain" default="3.0"/>    <!-- 匹配权重增益，默认值为 3.0 -->
+    <arg name="minimumScore" default="0"/> <!-- 最小得分要求，默认值为 0，表示不做过滤 -->
+
+    <!-- 机器人移动更新条件 -->
+    <arg name="linearUpdate" default="1.0"/>   <!-- 机器人移动 1.0 米触发地图更新，默认值为 1.0 米 -->
+    <arg name="angularUpdate" default="0.5"/>  <!-- 机器人旋转 0.5 弧度触发地图更新，默认值为 0.5 弧度 -->
+    <arg name="temporalUpdate" default="-1.0"/> <!-- 时间更新间隔，默认值为 -1.0 表示不强制时间更新 -->
+
+    <!-- 粒子滤波器采样参数 -->
+    <arg name="llsamplerange" default="0.01"/>  <!-- 平移采样范围，默认值为 0.01 米 -->
+    <arg name="llsamplestep" default="0.01"/>   <!-- 平移采样步长，默认值为 0.01 米 -->
+    <arg name="lasamplerange" default="0.005"/> <!-- 旋转采样范围，默认值为 0.005 弧度 -->
+    <arg name="lasamplestep" default="0.005"/>  <!-- 旋转采样步长，默认值为 0.005 弧度 -->
+
+</launch>

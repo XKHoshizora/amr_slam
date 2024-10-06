@@ -1,30 +1,76 @@
 <launch>
-    <!-- 载入真实机器人和传感器参数 -->
-    <!-- RPLiDAR 节点 -->
-    <!-- <node name="rplidar_node" pkg="rplidar_ros" type="rplidarNode" output="screen">
-        <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
-        <param name="serial_baudrate" type="int" value="1000000"/>
-        <param name="frame_id" type="string" value="laser"/>
-        <param name="inverted" type="bool" value="false"/>
-        <param name="angle_compensate" type="bool" value="true"/>
-        <param name="scan_frequency" type="double" value="10.0"/>
-    </node> -->
 
-    <!-- IMU 节点 -->
+    <!--
+                    Gmapping SLAM 需求列表
+        1. 激光雷达坐标系(header.frame_id，通常为 laser) → base_link
+        2. base_link → odom
+        3. 订阅 /scan 话题
+    -->
 
-    <!-- 里程计节点 -->
+    <!-- 导入 GMapping 参数文件 -->
+    <include file="$(find amr_slam)/config/gmapping_params.launch"/>
 
     <!-- Gmapping SLAM -->
-    <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping">
-        <!-- <param name="maxUrange" value="3.0"/> -->
-        <param name="map_update_interval" value="0.5"/>
-        <!-- <param name="linearUpdate" value="0.1"/> -->
+    <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" output="screen">
+
+        <!-- 激光雷达参数 -->
+        <remap from="scan" to="$(arg scan_topic)"/>   <!-- 确保雷达话题名正确，使用过滤后的激光雷达数据 -->
+        <param name="maxRange" value="$(arg maxRange)"/>  <!-- RPLiDAR S2 的最大探测范围 30 米 -->
+        <param name="maxUrange" value="$(arg maxUrange)"/>  <!-- 激光的最大可用范围，光束被裁剪至此值 12 米 -->
+        <param name="sigma" value="$(arg sigma)"/>      <!-- 激光测距噪声标准差，适应 RPLiDAR S2 的实际性能 -->
+        <param name="lskip" value="$(arg lskip)"/>         <!-- 跳过部分激光点，每隔 3 个点采集一个数据，减少计算负担 -->
+
+        <!-- 坐标系设置 -->
+        <param name="map_frame" value="$(arg map_frame)"/>           <!-- 地图坐标系 -->
+        <param name="odom_frame" value="$(arg odom_frame)"/>         <!-- 里程计坐标系 -->
+        <param name="base_frame" value="$(arg base_frame)"/>    <!-- 机器人底盘的坐标系，通常接近地面 -->
+
+        <!-- 地图更新和分辨率设置，调整地图分辨率以提高效率 -->
+        <param name="map_update_interval" value="$(arg map_update_interval)"/>  <!-- 地图更新间隔时间，1.0 秒更新一次 -->
+        <param name="throttle_scans" value="$(arg throttle_scans)"/>  <!-- 每进行 5 次扫描，处理 1 次 -->
+        <param name="xmin" value="$(arg xmin)"/>  <!-- 地图最小范围 X 轴 -->
+        <param name="ymin" value="$(arg ymin)"/>  <!-- 地图最小范围 Y 轴 -->
+        <param name="xmax" value="$(arg xmax)"/>   <!-- 地图最大范围 X 轴 -->
+        <param name="ymax" value="$(arg ymax)"/>   <!-- 地图最大范围 Y 轴 -->
+        <param name="delta" value="$(arg delta)"/>  <!-- 地图分辨率，5 cm 栅格大小 -->
+
+        <!-- 粒子滤波器设置 -->
+        <param name="particles" value="$(arg particles)"/>           <!-- 粒子数量，减少为 30，减轻 Jetson Orin Nano 的负担 -->
+        <param name="resampleThreshold" value="$(arg resampleThreshold)"/>  <!-- 重新采样阈值 0.5，决定粒子滤波器的重新采样频率 -->
+
+        <!-- 扫描匹配参数，适当调整以匹配实际硬件移动的精度和速度 -->
+        <param name="lstep" value="$(arg lstep)"/>    <!-- 线性步长，5 cm -->
+        <param name="astep" value="$(arg astep)"/>    <!-- 角度步长，0.05 rad -->
+        <param name="iterations" value="$(arg iterations)"/>  <!-- 最大迭代次数 5 次，减少计算复杂度 -->
+        <param name="kernelSize" value="$(arg kernelSize)"/>  <!-- 内核大小，1 表示精细匹配 -->
+
+        <!-- 机器人运动噪声设置，根据 RPLiDAR S2 和里程计性能适当调整 -->
+        <param name="srr" value="$(arg srr)"/>   <!-- 平移运动对平移的影响噪声，适度增加以减少漂移 -->
+        <param name="srt" value="$(arg srt)"/>   <!-- 平移运动对旋转的影响噪声 -->
+        <param name="str" value="$(arg str)"/>   <!-- 旋转运动对平移的影响噪声 -->
+        <param name="stt" value="$(arg stt)"/>   <!-- 旋转运动对旋转的影响噪声 -->
+
+        <!-- 平移和旋转更新噪声参数，稍微增大以应对低噪声激光雷达 -->
+        <param name="lsigma" value="$(arg lsigma)"/> <!-- 平移噪声 -->
+        <param name="ogain" value="$(arg ogain)"/>    <!-- 匹配权重增益保持为 3.0 -->
+        <param name="minimumScore" value="$(arg minimumScore)"/> <!-- 最小得分要求，过滤低质量匹配 -->
+
+        <!-- 机器人移动更新条件 -->
+        <param name="linearUpdate" value="$(arg linearUpdate)"/>   <!-- 机器人移动 1 m 触发地图更新，减少频繁更新 -->
+        <param name="angularUpdate" value="$(arg angularUpdate)"/>  <!-- 机器人旋转 0.5236 rad (约 30°) 触发地图更新 -->
+        <param name="temporalUpdate" value="$(arg temporalUpdate)"/>  <!-- 时间更新间隔设置为 -1 表示不强制时间更新 -->
+
+        <!-- 粒子滤波器采样范围和步长设置，调优以提高效果 -->
+        <param name="llsamplerange" value="$(arg llsamplerange)"/>  <!-- 平移采样范围 -->
+        <param name="llsamplestep" value="$(arg llsamplestep)"/>   <!-- 平移采样步长 -->
+        <param name="lasamplerange" value="$(arg lasamplerange)"/> <!-- 旋转采样范围 -->
+        <param name="lasamplestep" value="$(arg lasamplestep)"/>  <!-- 旋转采样步长 -->
+
     </node>
 
-    <!-- RViz 显示 -->
-    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find amr_slam)/config/rviz/slam.rviz"/> -->
-
-    <!-- 运动控制 -->
-    <!-- <node name="amr_controller_node" pkg="amr_controller" type="amr_controller_node"/> -->
+    <!-- 激光雷达和底盘的TF变换，确保正确的旋转中心 -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0 0 0.1 0 0 0 base_link laser 100"/> -->
+    <!-- 激光雷达和底盘的TF变换，确保LiDAR的方向正确 -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0 0 0 0 0 3.14159 base_link laser 100"/> -->
 
 </launch>

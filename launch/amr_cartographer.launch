@@ -3,7 +3,7 @@
     <param name="/use_sim_time" value="false" />
 
     <!-- Cartographer Node -->
-    <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node" output="screen" args="-configuration_directory /home/jetson/amr_ws/amr_launcher/config
+    <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node" output="screen" args="-configuration_directory $(find amr_slam)/config
               -configuration_basename amr_slam_cartographer.lua">
         <!-- Remap topics to match your laser scan topic -->
         <remap from="scan" to="rplidar_scan" />
